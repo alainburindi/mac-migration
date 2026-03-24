@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "claude-skills",
+  "name": "alb",
   "owner": {
     "name": "alainburindi",
     "email": "alainburindi62@gmail.com"
@@ -11,7 +11,7 @@
   },
   "plugins": [
     {
-      "name": "claude-skills",
+      "name": "alb",
       "source": "./",
       "description": "Slash commands for complex developer tasks — starting with Mac migration without Migration Assistant",
       "version": "1.0.0",

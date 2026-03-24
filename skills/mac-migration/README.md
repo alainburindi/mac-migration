@@ -1,4 +1,4 @@
-# /mac-migration
+# /alb:mac-migration
 
 An interactive Claude Code skill that guides you through migrating your complete developer environment from an old Mac to a new Mac — **without using Migration Assistant**.
 
@@ -28,23 +28,23 @@ This skill handles all of these scenarios, including automatically fixing hardco
 ## Usage
 
 ```bash
-/mac-migration
+/alb:mac-migration
 ```
 
 Or jump directly to a specific phase:
 
 ```bash
-/mac-migration audit            # Phase 1: Audit old Mac
-/mac-migration git-check        # Phase 2: Check unpushed git work
-/mac-migration generate-script  # Phase 3: Generate setup script
-/mac-migration transfer         # Phase 4: Transfer files
-/mac-migration databases        # Phase 5: Migrate databases
-/mac-migration apps             # Phase 6: Copy apps and data
-/mac-migration dotfiles         # Phase 7: Copy dotfiles
-/mac-migration claude-data      # Phase 8: Migrate Claude Code data
-/mac-migration shell            # Phase 9: Optimize shell
-/mac-migration auth             # Phase 10: Re-authenticate
-/mac-migration verify           # Phase 11: Verify migration
+/alb:mac-migration audit            # Phase 1: Audit old Mac
+/alb:mac-migration git-check        # Phase 2: Check unpushed git work
+/alb:mac-migration generate-script  # Phase 3: Generate setup script
+/alb:mac-migration transfer         # Phase 4: Transfer files
+/alb:mac-migration databases        # Phase 5: Migrate databases
+/alb:mac-migration apps             # Phase 6: Copy apps and data
+/alb:mac-migration dotfiles         # Phase 7: Copy dotfiles
+/alb:mac-migration claude-data      # Phase 8: Migrate Claude Code data
+/alb:mac-migration shell            # Phase 9: Optimize shell
+/alb:mac-migration auth             # Phase 10: Re-authenticate
+/alb:mac-migration verify           # Phase 11: Verify migration
 ```
 
 ## The 10 Phases

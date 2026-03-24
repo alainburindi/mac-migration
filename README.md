@@ -15,7 +15,7 @@ Claude Skills are slash commands that give Claude Code specialized, step-by-step
 
 **Step 2** — Install the plugin:
 ```
-/plugin install claude-skills@claude-skills
+/plugin install alb@alb
 ```
 
 That's it. All skills in this repo become available immediately.
@@ -24,7 +24,7 @@ That's it. All skills in this repo become available immediately.
 
 | Skill | Command | Description |
 |---|---|---|
-| Mac Migration | `/mac-migration` | Migrate your dev environment from an old Mac to a new Mac without Migration Assistant |
+| Mac Migration | `/alb:mac-migration` | Migrate your dev environment from an old Mac to a new Mac without Migration Assistant |
 
 ## Why Claude Skills?
 
