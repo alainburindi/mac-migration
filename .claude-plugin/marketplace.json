@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "alb",
+  "name": "mac-migration",
   "owner": {
     "name": "alainburindi",
     "email": "alainburindi62@gmail.com"
@@ -14,7 +14,7 @@
       "name": "alb",
       "source": {
         "source": "github",
-        "repo": "alainburindi/claude-skills"
+        "repo": "alainburindi/mac-migration"
       },
       "description": "Slash commands for complex developer tasks — starting with Mac migration without Migration Assistant",
       "version": "1.0.0",
@@ -22,8 +22,8 @@
         "name": "alainburindi",
         "email": "alainburindi62@gmail.com"
       },
-      "homepage": "https://github.com/alainburindi/claude-skills",
-      "repository": "https://github.com/alainburindi/claude-skills",
+      "homepage": "https://github.com/alainburindi/mac-migration",
+      "repository": "https://github.com/alainburindi/mac-migration",
       "license": "MIT",
       "keywords": ["mac", "migration", "developer", "setup", "dotfiles"],
       "category": "productivity",

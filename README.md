@@ -10,12 +10,12 @@ Claude Skills are slash commands that give Claude Code specialized, step-by-step
 
 **Step 1** — Add this repo as a marketplace (one-time):
 ```
-/plugin marketplace add alainburindi/claude-skills
+/plugin marketplace add alainburindi/mac-migration
 ```
 
 **Step 2** — Install the plugin:
 ```
-/plugin install alb@alb
+/plugin install alb@mac-migration
 ```
 
 That's it. All skills in this repo become available immediately.
