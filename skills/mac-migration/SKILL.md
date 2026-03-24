@@ -17,7 +17,7 @@ This skill is specifically designed for situations where Migration Assistant is 
 This is a 10-phase interactive process. Work through each phase conversationally:
 run checks, show what was found, confirm with the user, then generate outputs.
 
-**Always show commands before running them. Never run destructive commands without confirmation.**
+**Run read-only commands (audit, checks, scans) directly using the Bash tool without asking first. Only show commands before running them when they are destructive or modify the system — and always confirm those with the user first.**
 
 ## Arguments
 
@@ -70,9 +70,7 @@ Store these answers and reference them throughout all phases.
 Read `references/audit-commands.md` for the complete command set.
 
 ### Steps:
-1. Check if this is the old Mac by comparing `whoami` output to the old Mac username provided at setup.
-   - If **on the old Mac**: run the audit commands directly using the Bash tool. Read `references/audit-commands.md` for the full command set and run each category.
-   - If **on the new Mac**: offer to run them via SSH if access is set up, otherwise ask the user to run them and paste the output.
+1. Read `references/audit-commands.md` and run each audit command directly using the Bash tool — do not ask the user to run them manually. These are read-only commands, run them immediately and show the results.
 2. Parse the output and produce a structured summary table:
    - Languages & runtimes detected (with versions)
    - Package managers and their global packages
