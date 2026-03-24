@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "claude-skills",
-      "source": ".",
+      "source": "./",
       "description": "Slash commands for complex developer tasks — starting with Mac migration without Migration Assistant",
       "version": "1.0.0",
       "author": {
