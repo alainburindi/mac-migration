@@ -1,7 +1,7 @@
 ---
 name: mac-migration
 description: Guide the user through migrating their complete developer environment from an old Mac to a new Mac. Use this when the user says "migrate my Mac", "setting up a new Mac", "transferring to new Mac", "Mac migration", or mentions moving dev tools between Macs.
-argument-hint: "[audit|git-check|generate-script|transfer|databases|apps|dotfiles|claude-data|shell|auth]"
+argument-hint: "[audit|git-check|generate-script|transfer|databases|apps|dotfiles|claude-data|shell|auth|verify]"
 allowed-tools: [Bash, Read, Write, Glob, Grep]
 ---
 
@@ -32,6 +32,7 @@ If invoked with `$ARGUMENTS`, jump to the corresponding phase:
 - `claude-data` → Phase 8
 - `shell` → Phase 9
 - `auth` → Phase 10
+- `verify` → Phase 11
 - (empty) → Start from welcome message
 
 ## Welcome Message
@@ -51,6 +52,7 @@ Mac Migration — 10 Phases
 [ ] Phase 8:  Migrate Claude Code data
 [ ] Phase 9:  Optimize shell (if needed)
 [ ] Phase 10: Re-authenticate
+[ ] Phase 11: Verify migration
 ```
 
 Then ask:
@@ -93,11 +95,12 @@ Read `references/audit-commands.md` for the complete command set.
 ## Phase 2: Check Unpushed Git Work
 
 ### Steps:
-1. Ask: "Where do you store your projects? (e.g. `~/Documents/work`, `~/Projects`, `~/code` — you can list multiple directories)"
-2. Scan each directory for git repos with issues:
+1. Ask: "Where do you store your projects? (e.g. `~/Documents/work`, `~/Projects`, `~/code` — you can list multiple directories separated by spaces)"
+2. Store the answer as PROJECT_DIRS — use it in all subsequent phases that reference project locations.
+3. Scan each directory for git repos with issues:
 
 ```bash
-find DIRS -maxdepth 4 -name ".git" -type d 2>/dev/null | sed 's|/.git||' | while read repo; do
+find $PROJECT_DIRS -maxdepth 4 -name ".git" -type d 2>/dev/null | sed 's|/.git||' | while read repo; do
   name=$(basename "$repo")
   unpushed=$(git -C "$repo" log --oneline --branches --not --remotes 2>/dev/null | wc -l | tr -d ' ')
   dirty=$(git -C "$repo" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
@@ -157,7 +160,7 @@ ssh-copy-id -o IdentitiesOnly=yes -i ~/.ssh/id_rsa.pub NEW_USER@NEW_MAC_IP
 **3. Transfer directories**
 
 Ask which directories to transfer. Common ones:
-- `~/Documents`
+- All directories from PROJECT_DIRS (set in Phase 2)
 - `~/Desktop`
 - `~/Downloads`
 - `~/Pictures`
@@ -169,7 +172,7 @@ Generate rsync commands for each:
 ```bash
 rsync -avh --progress \
   -e "ssh -i ~/.ssh/id_rsa -o IdentitiesOnly=yes" \
-  ~/Documents/ NEW_USER@NEW_MAC_IP:~/Documents/
+  PROJECT_DIR/ NEW_USER@NEW_MAC_IP:PROJECT_DIR/
 ```
 
 **4. Username mismatch warning**
@@ -403,3 +406,103 @@ Also remind:
 - Check `.env` files in projects — some may have machine-specific paths
 - Re-activate any software licenses (JetBrains, Adobe, Sketch, etc.) that are machine-locked
 - Test a project end-to-end to confirm the migration worked
+
+---
+
+## Phase 11: Verify Migration
+
+Run this phase on the **new Mac** to confirm everything migrated correctly.
+Compare results against the Phase 1 audit from the old Mac.
+
+### Steps:
+
+**1. Tool versions**
+```bash
+echo "=== Node ===" && node --version 2>/dev/null
+echo "=== Python ===" && python3 --version 2>/dev/null
+echo "=== Ruby ===" && ruby --version 2>/dev/null
+echo "=== Go ===" && go version 2>/dev/null
+echo "=== Rust ===" && rustc --version 2>/dev/null
+echo "=== Java ===" && java --version 2>/dev/null
+echo "=== PHP ===" && php --version 2>/dev/null
+echo "=== Brew packages ===" && brew leaves 2>/dev/null | wc -l
+```
+Compare versions and package counts against Phase 1 output.
+
+**2. Services running**
+```bash
+brew services list
+```
+All services that were running on old Mac should show `started`.
+
+**3. Databases**
+```bash
+# PostgreSQL
+psql -U $(whoami) -l 2>/dev/null | grep -v "template\|postgres\|^-\|^List\|^Name\|^(" | wc -l
+
+# MongoDB
+mongosh --quiet --eval "db.adminCommand({listDatabases:1}).databases.map(d => d.name)" 2>/dev/null
+
+# MySQL
+mysql -u root -e "SHOW DATABASES;" 2>/dev/null | grep -v "information_schema\|performance_schema\|sys\|mysql\|Database"
+
+# Redis
+redis-cli ping 2>/dev/null
+```
+Compare database counts against what was dumped in Phase 5.
+
+**4. Projects**
+```bash
+# Count git repos (run for each directory in PROJECT_DIRS)
+find $PROJECT_DIRS -maxdepth 4 -name ".git" -type d 2>/dev/null | wc -l
+
+# Total size
+du -sh $PROJECT_DIRS
+```
+Compare against old Mac counts.
+
+**5. SSH keys**
+```bash
+ls ~/.ssh/
+ssh-add -l 2>/dev/null
+```
+All key pairs should be present. Test a real SSH connection:
+```bash
+ssh -T git@github.com 2>&1
+```
+
+**6. Shell startup time**
+```bash
+time zsh -i -c exit
+```
+Should be under 1 second with lazy loading applied.
+
+**7. Claude Code**
+```bash
+ls ~/.claude/projects/ | wc -l
+```
+Project count should match old Mac.
+
+**8. Generate a verification report**
+
+After running all checks, produce a summary report:
+
+```
+Migration Verification Report
+==============================
+✅ Node:        v24.7.0  (matches)
+✅ Python:      3.11.11  (matches)
+✅ Ruby:        3.4.1    (matches)
+✅ Services:    5/5 running
+✅ PostgreSQL:  29 databases
+✅ MongoDB:     2 databases
+✅ MySQL:       4 databases
+✅ Projects:    43 repos
+✅ SSH keys:    4 pairs
+✅ Shell:       0.4s startup
+✅ Claude Code: 8 projects
+
+Migration complete!
+```
+
+Flag any mismatches with ❌ and suggest fixes.

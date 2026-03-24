@@ -136,7 +136,7 @@ SQLite databases are just files — copy them directly:
 
 ```bash
 # Find SQLite files in projects
-find ~/Documents -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" 2>/dev/null
+find $PROJECT_DIRS -name "*.db" -o -name "*.sqlite" -o -name "*.sqlite3" 2>/dev/null
 
 # They are copied automatically as part of the project rsync in Phase 4
 ```

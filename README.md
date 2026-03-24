@@ -1,6 +1,10 @@
 # Claude Skills
 
-A collection of Claude Code slash commands for the team.
+A collection of Claude Code slash commands for developers.
+
+## What is this?
+
+Claude Skills are slash commands that give Claude Code specialized, step-by-step capabilities for complex developer tasks. Instead of explaining what you want from scratch every time, you just run a command and Claude guides you through it interactively.
 
 ## Installation
 
@@ -8,36 +12,21 @@ A collection of Claude Code slash commands for the team.
 /plugin install claude-skills@alainburindi
 ```
 
+That's it. All skills in this repo become available immediately.
+
 ## Available Skills
 
 | Skill | Command | Description |
 |---|---|---|
-| Mac Migration | `/mac-migration` | Migrate your dev environment from an old Mac to a new Mac |
+| Mac Migration | `/mac-migration` | Migrate your dev environment from an old Mac to a new Mac without Migration Assistant |
 
-## Usage
+## Why Claude Skills?
 
-### Mac Migration
-```bash
-/mac-migration                  # Start from the beginning
-/mac-migration audit            # Jump to Phase 1: Audit old Mac
-/mac-migration git-check        # Jump to Phase 2: Check unpushed git work
-/mac-migration generate-script  # Jump to Phase 3: Generate setup script
-/mac-migration transfer         # Jump to Phase 4: Transfer files
-/mac-migration databases        # Jump to Phase 5: Migrate databases
-/mac-migration apps             # Jump to Phase 6: Copy apps and data
-/mac-migration dotfiles         # Jump to Phase 7: Copy dotfiles
-/mac-migration claude-data      # Jump to Phase 8: Migrate Claude Code data
-/mac-migration shell            # Jump to Phase 9: Optimize shell
-/mac-migration auth             # Jump to Phase 10: Re-authenticate
-```
+- **Interactive** — Claude asks questions, adapts to your setup, and confirms before running commands
+- **Safe** — always shows what it will do before doing it
+- **Reusable** — works for any developer, not just one specific stack
+- **Extensible** — new skills can be added to this repo over time
 
-## Adding a New Skill
+## License
 
-1. Create a new folder under `skills/`
-2. Add a `SKILL.md` file
-3. Add any reference files under `references/`
-4. Update this README
-
-## Contributing
-
-PRs welcome!
+MIT
