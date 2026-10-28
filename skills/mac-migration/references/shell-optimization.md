@@ -1,17 +1,25 @@
-# Shell Optimization Reference
+# Shell Optimization Reference — Phase 9
 
-## Measuring Startup Time
+Runs on the new Mac. Back up first: `cp ~/.zshrc ~/.zshrc.pre-optimize`.
+
+## Measuring startup time
 
 ```bash
-# Measure current startup time (run 3 times and average)
-time zsh -i -c exit
+for i in 1 2 3; do /usr/bin/time zsh -i -c exit; done
 ```
+Anything over 0.5s is worth optimizing.
 
-Anything over 500ms is worth optimizing.
+## Principle: fast PATH, lazy manager
 
-## Common Slow Loaders
+Don't wrap `node`, `python`, `ruby` or `java` in lazy-load shell functions. Shell functions only exist in interactive shells, so git hooks (husky, pre-commit), editors, `#!/usr/bin/env node` scripts and other non-interactive tools would not find the runtime at all.
 
-### NVM (typically adds 300ms-1s)
+Instead:
+1. Put the default version (or the manager's shims directory) on `PATH`. This costs almost nothing.
+2. Lazy-load only the version manager command itself (`nvm`, `pyenv`, …), which is the slow part and only needed when switching versions.
+
+---
+
+## NVM (typically adds 300ms–1s)
 
 **Before (slow):**
 ```bash
@@ -20,73 +28,77 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 ```
 
-**After (lazy load):**
-```bash
+**After:**
+```zsh
 export NVM_DIR="$HOME/.nvm"
-node() { unset -f node npm npx nvm && [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" && node "$@"; }
-npm()  { unset -f node npm npx nvm && [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" && npm "$@"; }
-npx()  { unset -f node npm npx nvm && [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" && npx "$@"; }
-nvm()  { unset -f node npm npx nvm && [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" && nvm "$@"; }
+# Default Node on PATH: the version matching `nvm alias default`, else the highest installed
+_nvm_default=$(cat "$NVM_DIR/alias/default" 2>/dev/null)
+_nvm_bins=("$NVM_DIR"/versions/node/v${_nvm_default#v}*(N/nOn) "$NVM_DIR"/versions/node/v*(N/nOn))
+(( ${#_nvm_bins} )) && export PATH="${_nvm_bins[1]}/bin:$PATH"
+unset _nvm_default _nvm_bins
+# Load nvm itself only when it's used
+nvm() { unset -f nvm; [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"; nvm "$@"; }
 ```
+This is zsh syntax: `(N/nOn)` = no error if no match, directories only, numeric sort descending.
 
 ---
 
-### pyenv (typically adds 200-500ms)
+## pyenv (typically adds 200–500ms)
 
 **Before (slow):**
 ```bash
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
-eval "$(pyenv init --path)"
 eval "$(pyenv virtualenv-init -)"
 ```
 
-**After (lazy load):**
-```bash
-export PATH="$HOME/.pyenv/bin:$PATH"
-python()  { unset -f python python3 pip pip3 pyenv && eval "$(pyenv init -)" && eval "$(pyenv init --path)" && eval "$(pyenv virtualenv-init -)" && python "$@"; }
-python3() { unset -f python python3 pip pip3 pyenv && eval "$(pyenv init -)" && eval "$(pyenv init --path)" && eval "$(pyenv virtualenv-init -)" && python3 "$@"; }
-pip()     { unset -f python python3 pip pip3 pyenv && eval "$(pyenv init -)" && eval "$(pyenv init --path)" && eval "$(pyenv virtualenv-init -)" && pip "$@"; }
-pip3()    { unset -f python python3 pip pip3 pyenv && eval "$(pyenv init -)" && eval "$(pyenv init --path)" && eval "$(pyenv virtualenv-init -)" && pip3 "$@"; }
-pyenv()   { unset -f python python3 pip pip3 pyenv && eval "$(pyenv init -)" && eval "$(pyenv init --path)" && eval "$(pyenv virtualenv-init -)" && pyenv "$@"; }
+**After:**
+```zsh
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH"
+pyenv() {
+  unset -f pyenv
+  eval "$(command pyenv init -)"
+  command pyenv commands | grep -qx virtualenv-init && eval "$(command pyenv virtualenv-init -)"
+  pyenv "$@"
+}
 ```
+Shims on PATH make `python`, `pip` and any `.python-version` file work everywhere. Only `pyenv shell` and auto-activation of virtualenvs need the full init, which happens on the first `pyenv` call.
 
 ---
 
-### rbenv (typically adds 100-300ms)
+## rbenv (typically adds 100–300ms)
 
 **Before (slow):**
 ```bash
 eval "$(rbenv init -)"
 ```
 
-**After (lazy load):**
-```bash
-rbenv()  { unset -f rbenv ruby gem bundle && eval "$(command rbenv init -)" && rbenv "$@"; }
-ruby()   { unset -f rbenv ruby gem bundle && eval "$(command rbenv init -)" && ruby "$@"; }
-gem()    { unset -f rbenv ruby gem bundle && eval "$(command rbenv init -)" && gem "$@"; }
-bundle() { unset -f rbenv ruby gem bundle && eval "$(command rbenv init -)" && bundle "$@"; }
+**After:**
+```zsh
+export PATH="$HOME/.rbenv/shims:$PATH"
+rbenv() { unset -f rbenv; eval "$(command rbenv init -)"; rbenv "$@"; }
 ```
 
 ---
 
-### jenv (typically adds 100-200ms)
+## jenv (typically adds 100–200ms)
 
 **Before (slow):**
 ```bash
 eval "$(jenv init -)"
 ```
 
-**After (lazy load):**
-```bash
-jenv() { unset -f jenv java javac && eval "$(command jenv init -)" && jenv "$@"; }
-java()  { unset -f jenv java javac && eval "$(command jenv init -)" && java "$@"; }
-javac() { unset -f jenv java javac && eval "$(command jenv init -)" && javac "$@"; }
+**After:**
+```zsh
+export PATH="$HOME/.jenv/shims:$PATH"
+jenv() { unset -f jenv; eval "$(command jenv init -)"; jenv "$@"; }
 ```
+If tools rely on `JAVA_HOME`, run `jenv enable-plugin export` once; it needs the full init, so keep the eager `eval` for that case.
 
 ---
 
-### SDKMAN (typically adds 500ms+)
+## SDKMAN (typically adds 500ms+)
 
 **Before (slow):**
 ```bash
@@ -94,40 +106,38 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 ```
 
-**After (lazy load):**
-```bash
+**After:**
+```zsh
 export SDKMAN_DIR="$HOME/.sdkman"
-sdk() {
-  unset -f sdk java javac kotlin gradle
-  [[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
-  sdk "$@"
-}
+# Current version of every installed candidate (java, gradle, kotlin, …) on PATH
+for _c in "$SDKMAN_DIR"/candidates/*/current(N); do export PATH="$_c/bin:$PATH"; done
+unset _c
+[ -d "$SDKMAN_DIR/candidates/java/current" ] && export JAVA_HOME="$SDKMAN_DIR/candidates/java/current"
+sdk() { unset -f sdk; source "$SDKMAN_DIR/bin/sdkman-init.sh"; sdk "$@"; }
 ```
 
 ---
 
-## Other Optimizations
+## Other optimizations
 
 ### Remove duplicate PATH entries
-```bash
-# Add to .zshrc to deduplicate PATH
-typeset -U PATH
+```zsh
+typeset -U PATH path
 ```
 
-### Use `zsh-defer` for non-critical plugins
-```bash
-# Install: brew install romkatv/zsh-defer/zsh-defer
-# Then wrap slow plugins:
+### Defer non-critical plugins with `zsh-defer`
+```zsh
+# Install: git clone https://github.com/romkatv/zsh-defer.git ~/.zsh-defer
+source ~/.zsh-defer/zsh-defer.plugin.zsh
 zsh-defer source /path/to/slow/plugin.zsh
 ```
 
 ### Profile what's slow
-```bash
-# Add to top of .zshrc temporarily:
+```zsh
+# Add to the top of .zshrc temporarily:
 zmodload zsh/zprof
 
-# Add to bottom of .zshrc:
+# Add to the bottom of .zshrc:
 zprof
 ```
-
-This prints a profile of every function called during startup — useful for pinpointing the exact culprit.
+This prints a profile of every function called during startup, which pinpoints the exact culprit. Remove both lines afterwards.
