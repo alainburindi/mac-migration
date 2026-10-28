@@ -6,7 +6,7 @@
     "email": "alainburindi62@gmail.com"
   },
   "metadata": {
-    "description": "A collection of Claude Code slash commands for developers",
+    "description": "Claude Code skills for developers, starting with migrating a dev environment between Macs",
     "version": "1.0.0"
   },
   "plugins": [

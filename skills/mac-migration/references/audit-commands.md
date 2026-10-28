@@ -1,6 +1,8 @@
 # Audit Commands — Phase 1
 
-Run these on the **old Mac** to audit the dev environment.
+Run these on the **old Mac** to audit the dev environment. All commands are read-only.
+
+Depending on how the Bash tool's shell is set up, shell functions from `.zshrc` (`nvm`, `sdk`, lazy-load wrappers) may be missing, or may load slowly the first time. That's why version managers are detected by their directories as well as by their commands.
 
 ## System Info
 ```bash
@@ -9,7 +11,7 @@ echo "=== System ===" && sw_vers && uname -m && whoami
 
 ## Homebrew
 ```bash
-echo "=== Homebrew Formulae ===" && brew leaves 2>/dev/null
+echo "=== Homebrew Formulae ===" && brew leaves --installed-on-request 2>/dev/null
 echo "=== Homebrew Casks ===" && brew list --cask 2>/dev/null
 echo "=== Homebrew Taps ===" && brew tap 2>/dev/null
 ```
@@ -64,8 +66,16 @@ echo "=== Cargo installs ===" && ls ~/.cargo/bin 2>/dev/null || echo "not found"
 ```bash
 echo "=== Java ===" && java --version 2>/dev/null || echo "not found"
 echo "=== jenv versions ===" && jenv versions 2>/dev/null || echo "jenv not found"
-echo "=== SDKMAN ===" && sdk list java 2>/dev/null | grep installed || echo "not found"
+echo "=== SDKMAN ===" && ls ~/.sdkman/candidates/java 2>/dev/null || echo "not found"
 echo "=== Homebrew Java ===" && brew list | grep openjdk 2>/dev/null
+```
+
+## Multi-language Version Managers
+```bash
+echo "=== mise ===" && (mise ls 2>/dev/null || ls ~/.local/share/mise/installs 2>/dev/null) || echo "not found"
+echo "=== asdf ===" && (asdf list 2>/dev/null || ls ~/.asdf/installs 2>/dev/null) || echo "not found"
+echo "=== Volta ===" && (volta list all 2>/dev/null || ls ~/.volta/tools/image 2>/dev/null) || echo "not found"
+echo "=== conda ===" && (conda env list 2>/dev/null || ls -d ~/miniconda3 ~/anaconda3 ~/miniforge3 2>/dev/null) || echo "not found"
 ```
 
 ## Other Languages
@@ -85,6 +95,7 @@ echo "=== MongoDB ===" && mongod --version 2>/dev/null || echo "not found"
 echo "=== Redis ===" && redis-server --version 2>/dev/null || echo "not found"
 echo "=== SQLite ===" && sqlite3 --version 2>/dev/null || echo "not found"
 echo "=== Running services ===" && brew services list 2>/dev/null
+echo "=== Docker volumes ===" && docker volume ls 2>/dev/null || echo "docker not running"
 ```
 
 ## Cloud & DevOps CLIs
@@ -113,10 +124,24 @@ echo "=== Android SDK ===" && echo $ANDROID_HOME
 ```
 
 ## Shell & Dotfiles
+
+Lines that look like secrets (tokens, keys, passwords, URLs with embedded credentials) are filtered out so they never land in the conversation transcript.
 ```bash
 echo "=== Shell ===" && echo $SHELL
-echo "=== .zshrc ===" && cat ~/.zshrc 2>/dev/null
-echo "=== .zprofile ===" && cat ~/.zprofile 2>/dev/null
-echo "=== .gitconfig ===" && cat ~/.gitconfig 2>/dev/null
+echo "=== Framework ===" && ls -d ~/.oh-my-zsh ~/.zprezto ~/.config/starship.toml 2>/dev/null
+for f in ~/.zshrc ~/.zprofile ~/.zshenv ~/.gitconfig; do
+  [ -f "$f" ] && echo "=== $f (secrets filtered) ===" && /usr/bin/grep -viE 'token|secret|passw|api_?key|_key *=|auth|credential|bearer|_pat\b|_dsn|://[^ /]*@' "$f"
+done
 echo "=== SSH keys ===" && ls ~/.ssh/ 2>/dev/null
+echo "=== GPG secret keys ===" && gpg --list-secret-keys --keyid-format long 2>/dev/null || echo "gpg not found"
+```
+
+## Scheduled Jobs & Other User Config
+```bash
+echo "=== crontab ===" && crontab -l 2>/dev/null || echo "none"
+echo "=== LaunchAgents ===" && ls ~/Library/LaunchAgents 2>/dev/null
+echo "=== Custom /etc/hosts entries ===" && /usr/bin/grep -vE '^\s*(#|$)|localhost|broadcasthost' /etc/hosts
+echo "=== User fonts ===" && ls ~/Library/Fonts 2>/dev/null | wc -l
+echo "=== VS Code extensions ===" && code --list-extensions 2>/dev/null | wc -l
+echo "=== ~/.config ===" && ls ~/.config 2>/dev/null
 ```
